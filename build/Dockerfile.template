@@ -1,0 +1,25 @@
+# This template file supports Jinja2 template syntax.
+
+FROM golang:1.14 AS builder
+
+WORKDIR /go/src/api-first-01
+COPY . .
+
+RUN apt-get update && apt-get upgrade -y && apt-get install -y git
+
+ENV GO111MODULE on
+ENV CGO_ENABLED 0
+ENV GOOS linux
+
+RUN go install -mod=vendor -v ./...
+
+FROM golang:1.14-alpine AS runtime
+
+COPY --from=builder /go/bin/api-first-01 .
+
+ENV PORT {{ PORT }}
+ENV PROJECT_ID {{ PROJECT_ID }}
+ENV PROJECT_NUMBER {{ PROJECT_NUMBER }}
+ENV COMMIT {{ COMMIT }}
+
+ENTRYPOINT ["./api-first-01"]

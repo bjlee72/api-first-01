@@ -1,0 +1,53 @@
+swagger: '2.0'
+post:
+  summary: Create a Hello.
+  description: Create a new hello.
+  operationId: v1_create_hello
+  tags:
+    - Hello
+  parameters:
+    - in: body
+      name: body
+      description: a request to create a hello.
+      schema:
+        $ref: './models_hello.yaml#/definitions/CreateHelloRequest'
+      required: true
+  responses:
+    '200':
+      description: The hello is successfully created.
+      schema:
+        $ref: './models_hello.yaml#/definitions/CreateHelloResponse'
+    '400':
+      description: Bad Request
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
+    '500':
+      description: Internal Server Error
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
+get:
+  summary: List Hellos.
+  description: List Hellos which are in the system.
+  operationId: v1_list_hellos
+  tags:
+    - Hello
+  parameters:
+    - in: query
+      name: count
+      description: The number of hellos to retrieve.
+      type: number
+      format: int32
+      required: true
+  responses:
+    '200':
+      description: The list of hellos.
+      schema:
+        $ref: './models_hello.yaml#/definitions/ListHellosResponse'
+    '400':
+      description: Bad request.
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
+    '500':
+      description: Internal Server Error.
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'

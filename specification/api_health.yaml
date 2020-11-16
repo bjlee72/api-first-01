@@ -1,0 +1,16 @@
+swagger: '2.0'
+get:
+  summary: Check the health of the service.
+  description: Check the health of the api-first-01 service. This is critical to make the healthy GKE workload.
+  operationId: v1_health_check
+  tags:
+    - Health
+  responses:
+    '200':
+      description: The API is working fine.
+      schema:
+        $ref: './models_health.yaml#/definitions/HealthCheckResponse'
+    '500':
+      description: Internal Server Error.
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'

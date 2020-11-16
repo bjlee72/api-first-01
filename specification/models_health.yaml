@@ -1,0 +1,11 @@
+swagger: '2.0'
+definitions:
+  HealthCheckResponse:
+    description: A response to a health check request.
+    type: object
+    properties:
+      healthy:
+        description: Indicates whether the server is healthy or not.
+        type: boolean
+    required:
+      - healthy

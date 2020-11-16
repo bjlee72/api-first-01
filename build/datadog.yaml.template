@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: datadog-agent
+  namespace: {{ SERVICE_NAME }}-{{ STAGE }}
+spec:
+  selector:
+    matchLabels:
+      app: datadog-agent
+  template:
+    metadata:
+      labels:
+        app: datadog-agent
+      name: datadog-agent
+    spec:
+      containers:
+        - image: datadog/agent:latest
+          imagePullPolicy: Always
+          name: datadog-agent
+          ports:
+            - containerPort: 8125
+              hostPort: 8125
+              name: dogstatsdport
+              protocol: UDP
+            - containerPort: 8126
+              hostPort: 8126
+              name: traceport
+              protocol: TCP
+          env:
+            - name: DD_API_KEY
+              value: {{ DATADOG_KEY }}
+            - name: DD_COLLECT_KUBERNETES_EVENTS
+              value: "true"
+            - name: KUBERNETES
+              value: "true"
+            - name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
+              value: "true"
+            - name: DD_CONTAINER_INCLUDE
+              value: "image:gcr.io/{{ PROJECT_ID }}/.*"
+            - name: DD_CONTAINER_EXCLUDE
+              value: "image:.*"
+            - name: DD_KUBERNETES_KUBELET_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              cpu: "200m"
+          volumeMounts:
+            - name: dockersocket
+              mountPath: /var/run/docker.sock
+            - name: procdir
+              mountPath: /host/proc
+              readOnly: true
+            - name: cgroups
+              mountPath: /host/sys/fs/cgroup
+              readOnly: true
+            - name: pointerdir
+              mountPath: /var/run/datadog-agent/run
+          livenessProbe:
+            exec:
+              command:
+                - ./probe.sh
+            initialDelaySeconds: 15
+            periodSeconds: 5
+      volumes:
+        - hostPath:
+            path: /var/run/docker.sock
+          name: dockersocket
+        - hostPath:
+            path: /proc
+          name: procdir
+        - hostPath:
+            path: /sys/fs/cgroup
+          name: cgroups
+        - hostPath:
+            path: /var/run/datadog-agent/run
+          name: pointerdir
