@@ -1,0 +1,68 @@
+swagger: '2.0'
+definitions:
+  Hello:
+    description: A Hello.
+    type: object
+    properties:
+      id:
+        description: The hello ID.
+        type: string
+        readOnly: true
+      message:
+        description: The hello message.
+        type: string
+    required:
+      - message
+  HelloStatus:
+    description: A Hello Status.
+    type: object
+    properties:
+      enabled:
+        description: the current status of the given hello.
+        type: boolean
+    required:
+      - enabled
+  CreateHelloRequest:
+    description: A request to create a hello.
+    type: object
+    properties:
+      hello:
+        $ref: '#/definitions/Hello'
+    required:
+      - hello
+  CreateHelloResponse:
+    description: A response to the request to create a hello.
+    type: object
+    properties:
+      hello:
+        $ref: '#/definitions/Hello'
+    required:
+      - hello
+  ReadHelloResponse:
+    description: A response to the request to read a hello.
+    type: object
+    properties:
+      hello:
+        $ref: '#/definitions/Hello'
+    required:
+      - hello
+  ListHellosResponse:
+    description: A response to the request to list hellos.
+    type: object
+    properties:
+      hellos:
+        description: The hellos.
+        type: array
+        items:
+          $ref: '#/definitions/Hello'
+    required:
+      - hellos
+  ReadHelloStatusResponse:
+    description: A response to a request to read the hello status.
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/HelloStatus'
+    required:
+      - status
+

@@ -1,0 +1,30 @@
+swagger: '2.0'
+get:
+  summary: Read a hello.
+  description: Read a specific hello with its ID.
+  operationId: v1_read_hello
+  tags:
+    - Hello
+  parameters:
+    - name: hello_id
+      description: The ID of the hello.
+      in: path
+      type: string
+      required: true
+  responses:
+    '200':
+      description: The hello is successfully read.
+      schema:
+        $ref: './models_hello.yaml#/definitions/ReadHelloResponse'
+    '400':
+      description: Bad request
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
+    '404':
+      description: Not found - no such user.
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
+    '500':
+      description: Internal Server Error
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'

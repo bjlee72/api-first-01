@@ -1,0 +1,130 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ SERVICE_NAME }}-{{ STAGE }}
+  namespace: {{ SERVICE_NAME }}-{{ STAGE }}
+  labels:
+    app: {{ SERVICE_NAME }}-{{ STAGE }}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: {{ SERVICE_NAME }}-{{ STAGE }}
+  template:
+    metadata:
+      labels:
+        app: {{ SERVICE_NAME }}-{{ STAGE }}
+    spec:
+      containers:
+        - name: {{ SERVICE_NAME }}-container-{{ STAGE }}
+          image: gcr.io/{{ PROJECT_ID }}/{{ SERVICE_NAME }}-{{ COUNTRY }}:{{ COMMIT }}
+          env:
+            - name: STAGE
+              value: {{ STAGE }}
+            - name: DATADOG_HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /service-account/{{ SERVICE_NAME }}-service-account-key.json
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 250m
+            limits:
+              cpu: 300m
+          volumeMounts:
+            # For GKE cluster, if you don't specify the service account in this way,
+            # it will assume a default compute service account. The problem of it is,
+            # whatever roles you assign to the service account, what the service can do
+            # won't change because basically it's fixed when the cluster is first created.
+            # To work around the issue, please create a service account and put the credential file
+            # into a GKE secret 'service-account-key' and mount the secret as a volume and
+            # initialize the env variable GOOGLE_APPLICATION_CREDENTIALS with credential file
+            # as given in this example. Then the service will correctly assume the service account.
+            # Please note that you should name the credential file like '{{ SERVICE_NAME }}-service-account-key.json'
+            # because otherwise the above 'env' configuration cannot find the file.
+            - name: service-account       # The name of the GKE secret
+              mountPath: /service-account # The directory that the credential file is mounted
+              readOnly: true
+      volumes:
+        - name: service-account
+          secret:
+            secretName: service-account-key
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ SERVICE_NAME }}-hpa-{{ STAGE }}
+  namespace: {{ SERVICE_NAME }}-{{ STAGE }}
+  labels:
+    app: {{ SERVICE_NAME }}-{{ STAGE }}
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: {{ SERVICE_NAME }}-{{ STAGE }}
+    apiVersion: apps/v1
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 80
+---
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: {{ SERVICE_NAME }}-bc-iap
+  namespace: {{ SERVICE_NAME }}-{{ STAGE }}
+spec:
+  iap:
+    enabled: true
+    oauthclientCredentials:
+      secretName: iap-client-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ SERVICE_NAME }}-service
+  namespace: {{ SERVICE_NAME }}-{{ STAGE }}
+  annotations:
+    # This will make the service '{{ SERVICE_NAME }}-service' run behind IAP.
+    cloud.google.com/backend-config: '{"ports":{"80":"{{ SERVICE_NAME }}-bc-iap"}}'
+spec:
+  type: NodePort # To create Ingress using the service.
+  selector:
+    app: {{ SERVICE_NAME }}-{{ STAGE }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ SERVICE_NAME }}-ingress
+  namespace: {{ SERVICE_NAME }}-{{ STAGE }}
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /v1/*
+            backend:
+              serviceName: {{ SERVICE_NAME }}-service
+              servicePort: 80
+          - path: /docs
+            backend:
+              serviceName: {{ SERVICE_NAME }}-service
+              servicePort: 80
+          - path: /docs/*
+            # This path is to handle the IAP-specific URI postfixes.
+            backend:
+              serviceName: {{ SERVICE_NAME }}-service
+              servicePort: 80
+          - path: /swagger.json
+            backend:
+              serviceName: {{ SERVICE_NAME }}-service
+              servicePort: 80

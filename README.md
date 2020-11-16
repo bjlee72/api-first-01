@@ -1,2 +1,5 @@
-# api-first-01
-The sample project for the book "API first on the go"
+# Sample Project 01
+
+This is a sample project for the "API First on the Go".
+
+

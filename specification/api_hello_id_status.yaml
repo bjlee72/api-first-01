@@ -1,0 +1,30 @@
+swagger: '2.0'
+get:
+  summary: Get the status of a hello.
+  description: Get the current status of a specific hello.
+  operationId: v1_read_hello_status
+  tags:
+    - Hello
+  parameters:
+    - name: hello_id
+      description: The ID of the hello.
+      in: path
+      type: string
+      required: true
+  responses:
+    '200':
+      description: The status of the given hello.
+      schema:
+        $ref: './models_hello.yaml#/definitions/ReadHelloStatusResponse'
+    '400':
+      description: Bad request
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
+    '404':
+      description: Not found
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
+    '500':
+      description: Internal Server Error
+      schema:
+        $ref: './models_common.yaml#/definitions/Error'
